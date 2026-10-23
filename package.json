@@ -1,0 +1,17 @@
+{
+  "name": "blog-single-page",
+  "version": "1.0.0",
+  "description": "Blog de página única com Supabase (Auth, PostgreSQL, Storage) servido por Node.js.",
+  "private": true,
+  "main": "server.js",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "dompurify": "^3.1.6"
+  },
+  "license": "MIT"
+}

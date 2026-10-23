@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blog</title>
+  <meta name="description" content="Blog de leitura contínua em uma única página.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-admin="false" data-signed-in="false">
+  <a class="skip" href="#feed">Ir para os posts</a>
+
+  <header class="site-header">
+    <div class="wrap bar">
+      <a class="brand" href="./">Blog</a>
+      <nav class="actions" aria-label="Conta">
+        <button type="button" id="btn-new" class="btn primary admin-only">Novo post</button>
+        <button type="button" id="btn-logout" class="btn user-only">Sair</button>
+        <button type="button" id="btn-login" class="btn guest-only">Entrar</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <noscript><p class="notice">Este blog precisa de JavaScript para carregar os posts.</p></noscript>
+    <div id="feed"></div>
+
+    <p id="loading" class="notice" role="status" hidden>Carregando posts…</p>
+    <div id="error" class="notice error" role="alert" hidden>
+      <p id="error-text"></p>
+      <button type="button" id="retry" class="btn">Tentar novamente</button>
+    </div>
+    <p id="empty" class="notice" hidden>Ainda não há posts publicados.</p>
+    <section id="end" class="end" hidden aria-label="Fim do blog">
+      <img src="assets/end.svg" alt="" width="48" height="12">
+      <p>Chegou ao fim do blog.</p>
+    </section>
+    <div id="sentinel" aria-hidden="true"></div>
+  </main>
+
+  <dialog id="login-dialog" aria-labelledby="login-title">
+    <form id="login-form" autocomplete="on">
+      <h2 id="login-title">Entrar</h2>
+      <label>E-mail <input name="email" type="email" autocomplete="username" required></label>
+      <label>Senha <input name="password" type="password" autocomplete="current-password" required></label>
+      <p id="login-error" class="form-error" role="alert"></p>
+      <div class="row end-row">
+        <button type="button" id="login-cancel" class="btn">Cancelar</button>
+        <button type="submit" class="btn primary">Entrar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="editor-dialog" class="wide" aria-labelledby="ed-heading">
+    <form id="editor-form">
+      <h2 id="ed-heading">Novo post</h2>
+      <label>Título <input id="ed-title" maxlength="200" required></label>
+      <label>Subtítulo (opcional) <input id="ed-subtitle" maxlength="300"></label>
+
+      <div class="toolbar" role="toolbar" aria-label="Formatação">
+        <button type="button" class="btn" data-cmd="h1">H1</button>
+        <button type="button" class="btn" data-cmd="h2">H2</button>
+        <button type="button" class="btn" data-cmd="h3">H3</button>
+        <button type="button" class="btn" data-cmd="p">Parágrafo</button>
+        <button type="button" class="btn" data-cmd="strong"><strong>Negrito</strong></button>
+        <button type="button" class="btn" data-cmd="em"><em>Itálico</em></button>
+        <button type="button" class="btn" data-cmd="mark">Marca-texto</button>
+        <button type="button" class="btn" data-cmd="ul">Lista</button>
+        <button type="button" class="btn" data-cmd="ol">Lista numerada</button>
+        <button type="button" class="btn" data-cmd="a">Link</button>
+        <button type="button" class="btn" data-cmd="blockquote">Citação</button>
+        <button type="button" class="btn" data-cmd="img">Imagem</button>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Modo do editor">
+        <button type="button" role="tab" id="tab-html" aria-selected="true" aria-controls="ed-body">HTML</button>
+        <button type="button" role="tab" id="tab-preview" aria-selected="false" aria-controls="ed-preview">Visualizar</button>
+      </div>
+      <textarea id="ed-body" spellcheck="false" aria-label="Conteúdo em HTML" required></textarea>
+      <div id="ed-preview" class="preview post-body" hidden></div>
+
+      <p id="ed-error" class="form-error" role="alert"></p>
+      <div class="row end-row">
+        <button type="button" id="ed-cancel" class="btn">Cancelar</button>
+        <button type="submit" id="ed-save" class="btn primary">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="image-dialog" aria-labelledby="img-title">
+    <form id="image-form">
+      <h2 id="img-title">Inserir imagem</h2>
+      <label>Enviar arquivo (JPEG, PNG, WebP ou GIF, até 2 MB)
+        <input id="img-file" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></label>
+      <p class="hint">ou</p>
+      <label>URL de imagem externa (https) <input id="img-url" type="url" placeholder="https://exemplo.com/foto.jpg"></label>
+      <label>Texto alternativo <input id="img-alt" maxlength="200"></label>
+      <p id="img-error" class="form-error" role="alert"></p>
+      <div class="row end-row">
+        <button type="button" id="img-cancel" class="btn">Cancelar</button>
+        <button type="submit" id="img-insert" class="btn primary">Inserir</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="config.js"></script>
+  <script src="vendor/supabase.js"></script>
+  <script src="vendor/purify.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
