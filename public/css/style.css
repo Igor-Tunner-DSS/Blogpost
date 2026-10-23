@@ -26,7 +26,7 @@ a { color: var(--accent); }
 
 .btn { font: 500 .9rem var(--sans); padding: .45rem .8rem; border: 1px solid var(--line); border-radius: 4px;
        background: var(--surface); color: var(--ink); cursor: pointer; min-height: 2.25rem; }
-.btn:hover { border-color: var(--accent); }
+.btn:hover { border-color: var(--accent); filter: brightness(95%) }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .btn.danger { color: var(--danger); }
 .btn:disabled { opacity: .6; cursor: progress; }
