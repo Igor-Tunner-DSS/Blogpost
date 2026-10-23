@@ -22,11 +22,12 @@ a { color: var(--accent); }
 .site-header { border-bottom: 1px solid var(--line); background: var(--surface); }
 .bar { display: flex; align-items: center; justify-content: space-between; min-height: 3.5rem; gap: 1rem; }
 .brand { font: 700 1.25rem var(--serif); color: var(--ink); text-decoration: none; }
+.brand span { color: var(--accent); }
 .actions { display: flex; gap: .5rem; }
 
 .btn { font: 500 .9rem var(--sans); padding: .45rem .8rem; border: 1px solid var(--line); border-radius: 4px;
        background: var(--surface); color: var(--ink); cursor: pointer; min-height: 2.25rem; }
-.btn:hover { border-color: var(--accent); filter: brightness(95%) }
+.btn:hover { border-color: var(--accent); box-shadow: 2px 2px 4px 2px black; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .btn.danger { color: var(--danger); }
 .btn:disabled { opacity: .6; cursor: progress; }
