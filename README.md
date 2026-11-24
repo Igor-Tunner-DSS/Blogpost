@@ -3,9 +3,9 @@
 Blog de página única: todos os posts em uma coluna contínua (mais recente primeiro), carregamento progressivo por rolagem e mensagem final **"Chegou ao fim do blog."**. Um único administrador cria, edita e exclui posts com um editor HTML e envia imagens.
 
 - **Frontend:** HTML, CSS e JavaScript puro (módulos ES), sem build.
-- **Servidor:** Node.js (`server.js`, sem framework) — serve os arquivos estáticos e gera `/config.js` com a configuração pública.
+- **Servidor:** Node.js com [Express](https://expressjs.com/) (`server.js`) — serve os arquivos estáticos, gera `/config.js` com a configuração pública, expõe `/healthz` e aplica os cabeçalhos de segurança (CSP etc.) por middleware.
 - **Backend:** Supabase (PostgreSQL + Auth + Storage).
-- **Dependências npm:** `@supabase/supabase-js` e `dompurify` (sanitização de HTML; leve, gratuita e mantida). São servidas localmente em `/vendor/`.
+- **Dependências npm:** `express` (servidor HTTP), `@supabase/supabase-js` e `dompurify` (sanitização de HTML; leve, gratuita e mantida). As duas últimas são servidas localmente em `/vendor/`.
 
 ## Estrutura
 

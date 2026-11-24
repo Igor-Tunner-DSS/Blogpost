@@ -2,17 +2,12 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
+const express = require('express');
 
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const VENDOR = {
   '/vendor/supabase.js': path.join(__dirname, 'node_modules/@supabase/supabase-js/dist/umd/supabase.js'),
   '/vendor/purify.min.js': path.join(__dirname, 'node_modules/dompurify/dist/purify.min.js'),
-};
-const MIME = {
-  '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml',
-  '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp',
-  '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8',
 };
 
 function loadDotEnv(file) {
@@ -42,7 +37,7 @@ function validateEnv(env) {
   return { url: origin.origin, key };
 }
 
-function createServer(env = process.env) {
+function createApp(env = process.env) {
   const cfg = validateEnv(env);
   const configJs = 'window.__ENV__=' +
     JSON.stringify({ SUPABASE_URL: cfg.url, SUPABASE_ANON_KEY: cfg.key }).replace(/</g, '\\u003c') + ';';
@@ -52,52 +47,67 @@ function createServer(env = process.env) {
     "object-src 'none'", "base-uri 'none'", "form-action 'self'", "frame-ancestors 'none'",
   ].join('; ');
 
-  const baseHeaders = {
-    'Content-Security-Policy': csp,
-    'X-Content-Type-Options': 'nosniff',
-    'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'X-Frame-Options': 'DENY',
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-  };
-  const send = (res, code, body, extra = {}) => {
-    res.writeHead(code, { ...baseHeaders, 'Content-Type': 'text/plain; charset=utf-8', ...extra });
-    res.end(body);
-  };
+  const app = express();
+  app.disable('x-powered-by');
 
-  return http.createServer((req, res) => {
-    if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'Método não permitido', { Allow: 'GET, HEAD' });
-    let pathname;
-    try { pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname); }
-    catch { return send(res, 400, 'Requisição inválida'); }
-    if (pathname.includes('\0')) return send(res, 400, 'Requisição inválida');
-
-    if (pathname === '/healthz') return send(res, 200, 'ok');
-    if (pathname === '/config.js') {
-      return send(res, 200, req.method === 'HEAD' ? '' : configJs,
-        { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-cache' });
-    }
-
-    let file = VENDOR[pathname];
-    let cache = 'public, max-age=86400';
-    if (!file) {
-      if (pathname.endsWith('/')) pathname += 'index.html';
-      file = path.join(PUBLIC_DIR, pathname);
-      if (file !== PUBLIC_DIR && !file.startsWith(PUBLIC_DIR + path.sep)) return send(res, 403, 'Acesso negado');
-      cache = pathname.endsWith('.html') ? 'no-cache' : 'public, max-age=300';
-    }
-    fs.stat(file, (err, st) => {
-      if (err || !st.isFile()) return send(res, 404, 'Não encontrado');
-      res.writeHead(200, {
-        ...baseHeaders, 'Content-Type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream',
-        'Content-Length': st.size, 'Cache-Control': cache,
-      });
-      if (req.method === 'HEAD') return res.end();
-      fs.createReadStream(file).on('error', () => res.destroy()).pipe(res);
+  // Cabeçalhos de segurança em todas as respostas (inclusive erros).
+  app.use((req, res, next) => {
+    res.set({
+      'Content-Security-Policy': csp,
+      'X-Content-Type-Options': 'nosniff',
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'X-Frame-Options': 'DENY',
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
     });
+    next();
   });
+
+  // Somente leitura: o frontend fala direto com o Supabase.
+  app.use((req, res, next) => {
+    if (req.method === 'GET' || req.method === 'HEAD') return next();
+    res.set('Allow', 'GET, HEAD').status(405).type('text/plain').send('Método não permitido');
+  });
+
+  app.get('/healthz', (req, res) => res.type('text/plain').send('ok'));
+
+  app.get('/config.js', (req, res) => {
+    res.set('Cache-Control', 'no-cache').type('text/javascript').send(configJs);
+  });
+
+  for (const [route, file] of Object.entries(VENDOR)) {
+    app.get(route, (req, res, next) => {
+      res.sendFile(file, { maxAge: '1d', dotfiles: 'allow' }, (err) => err && next(err));
+    });
+  }
+
+  // Arquivos estáticos de public/ (index.html em '/'; bloqueia path traversal e dotfiles).
+  app.use(express.static(PUBLIC_DIR, {
+    maxAge: '5m',
+    fallthrough: false, // repassa 400/403/404 ao handler de erro em vez de virar 404
+    redirect: false,
+    setHeaders: (res, file) => {
+      if (file.endsWith('.html')) res.set('Cache-Control', 'no-cache');
+    },
+  }));
+
+  app.use((req, res) => res.status(404).type('text/plain').send('Não encontrado'));
+
+  // eslint-disable-next-line no-unused-vars
+  app.use((err, req, res, next) => {
+    const status = err.status || err.statusCode || 500;
+    const msg = { 400: 'Requisição inválida', 403: 'Acesso negado', 404: 'Não encontrado' }[status] || 'Erro interno';
+    if (res.headersSent) return res.destroy();
+    res.status(status >= 400 && status < 600 ? status : 500).type('text/plain').send(msg);
+  });
+
+  return app;
 }
 
-module.exports = { createServer, validateEnv };
+function createServer(env = process.env) {
+  return http.createServer(createApp(env));
+}
+
+module.exports = { createApp, createServer, validateEnv };
 
 if (require.main === module) {
   loadDotEnv(path.join(__dirname, '.env'));
